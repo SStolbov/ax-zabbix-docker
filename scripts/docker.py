@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/python3.6
 # originaly from 
 import os
 import json
@@ -20,11 +20,14 @@ def discover():
 	with os.popen("docker ps -a --format \"{{.Names}} {{.ID}}\"") as pipe:
 		for line in pipe:
 			ps = {}
-			ps["{#CONTAINERNAME}"] = line.strip().split()[0]
+			reg = r'^.+?\.[\w]+'
+#			ps["{#CONTAINERNAME}"] = line.strip().split()[0]
+			ps["{#CONTAINERNAME}"] = re.match(reg, line.strip().split()[0]).group()
 			ps["{#CONTAINERID}"] = line.strip().split()[1]
 			d["data"].append(ps)
 	print (json.dumps(d))
 
+                            
 def count_running():
 	with os.popen("docker ps -q | wc -l") as pipe:
 		print (pipe.readline().strip())
@@ -54,7 +57,7 @@ def status(args):
 	
 # get the uptime in seconds, if the container is running
 def uptime(args):
-	with os.popen("docker inspect -f '{{json .State}}' " + args.container + " 2>&1") as pipe:
+	with os.popen("docker inspect -f '{{json .State}}'  " + args.container + ") 2>&1") as pipe:
 		status = pipe.read().strip()
 	if "No such image or container" in status:
 		print ("0")
@@ -68,7 +71,7 @@ def uptime(args):
 			print ("0")
 
 def disk(args):
-	with os.popen("docker inspect -s -f {{.SizeRootFs}} " + args.container + " 2>&1") as pipe:
+	with os.popen("docker inspect -s -f {{.SizeRootFs}}  $(docker ps | grep " + args.container + "| awk '{ print $1 }') 2>&1") as pipe:
 		stat = pipe.read().strip()
 	pipe.close()
 	# test that the docker command succeeded and pipe contained data
@@ -149,14 +152,14 @@ def single_stat_check(args, filename):
 
 	return stat
 
+
 # helper function to update single stats
 def single_stat_update(args, container_dir, filename):
-
 	pipe = os.popen("docker exec " + args.container + " cat " + container_dir + "/" + filename  + " 2>&1")
 	for line in pipe:
 		stat = line
 	pipe.close()
-	# test that the docker command succeeded and pipe contained data
+    # test that the docker command succeeded and pipe contained data
 	if not 'stat' in locals():
 		stat = ""
 	try:
@@ -185,29 +188,28 @@ def multi_stat_check(args, filename):
 			os.mkdir("/tmp/" + args.container)
 		debug(args.container + ": could not get last stats from " + filename)
 		debug(str(e))
-
-		# first time running for this container create empty file
+	# first time running for this container create empty file
 		open("/tmp/" + args.container + "/" + filename,"w").close()
 	return dict
 
-def multi_stat_update(args, container_dir, filename):
-	dict = {}
-	try:
-		pipe = os.popen("docker exec " + args.container + " cat " + container_dir + "/" + filename  + " 2>&1")
-		for line in pipe:
-			m = _STAT_RE.match(line)
-			if m:
-				dict[m.group(1)] = m.group(2)
-		pipe.close()
-		f = open("/tmp/" + args.container + "/" + filename,"w")
+# def multi_stat_update(args, container_dir, filename):
+#	dict = {}
+#	try:
+#		pipe = os.popen("docker exec " + args.container + " cat " + container_dir + "/" + filename  + " 2>&1")
+#		for line in pipe:
+#			m = _STAT_RE.match(line)
+#			if m:
+#				dict[m.group(1)] = m.group(2)
+#		pipe.close()
+#		f = open("/tmp/" + args.container + "/" + filename,"w")
 
-		for key in dict.keys():
-			f.write(key + " " + dict[key] + "\n")
-		f.close()
-	except Exception:
-		debug(args.container + ": could not update " + filename)
-		debug(str(sys.exc_info()))
-	return dict
+#		for key in dict.keys():
+#			f.write(key + " " + dict[key] + "\n")
+#		f.close()
+#	except Exception:
+#		debug(args.container + ": could not update " + filename)
+#		debug(str(sys.exc_info()))
+#	return dict
 
 
 def memory(args):
@@ -234,14 +236,19 @@ if __name__ == "__main__":
 		parser.add_argument("container", help="container id")
 		parser.add_argument("stat", help="container stat", choices=["status", "uptime", "cpu","mem", "disk", "netin", "netout"])
 		args = parser.parse_args()
+		pipe  = os.popen("docker ps | grep " + args.container + "| awk '{ print $1 }' 2>&1")
+		for line in pipe:
+		    args.container = line.rstrip("\n")
+		pipe.close()		
 		# validate the parameter for container
-		m = re.match("(^[a-zA-Z0-9-_]+$)", args.container)
-		if not m:
-			print ("Invalid parameter for container id detected")
-			debug("Invalid parameter for container id detected" + str(args.container))
-			sys.exit(2)
+#		m = re.match("(^[a-zA-Z0-9-_]+$)", args.container)
+#		if not m:
+#			print ("Invalid parameter for container id detected")
+#			debug("Invalid parameter for container id detected" + str(args.container))
+#			sys.exit(2)
 
 		# call the correct function to get the stats
+		
 		if args.stat == "status":
 			debug("calling status for " + args.container)
 			status(args)
