@@ -29,9 +29,7 @@
 
 # Fork instructions
 Fork from  https://share.zabbix.com/virtualization/docker/ax-zabbix-docker-monitoring
-
-
-https://github.com/dimuskin/ax-zabbix-docker/blob/master/zabbix-templates/zabbix_docker_templates.xml
+https://github.com/dimuskin/ax-zabbix-docker
 
 
 ## Install Python
