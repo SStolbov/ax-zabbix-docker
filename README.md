@@ -49,4 +49,4 @@ https://github.com/dimuskin/ax-zabbix-docker
 * chmod 755 /etc/zabbix/docker.py
 * service  zabbix-agent restart
 * service  zabbix-agent status
-
+* usermod -a -G docker zabbix
