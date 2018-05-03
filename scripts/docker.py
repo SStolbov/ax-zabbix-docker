@@ -16,7 +16,7 @@ _DEBUG = os.getenv("DEBUG", False)
 def discover():
 	d = {}
 	d["data"] = []
-	with os.popen("docker ps -a --format \"{{.Names}} {{.ID}}\"") as pipe:
+	with os.popen("docker ps --format \"{{.Names}} {{.ID}}\"") as pipe:
 		for line in pipe:
 			ps = {}
 			reg = r'^.+?\.[\d]+'
