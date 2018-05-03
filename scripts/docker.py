@@ -21,7 +21,6 @@ def discover():
 		for line in pipe:
 			ps = {}
 			reg = r'^.+?\.[\w]+'
-#			ps["{#CONTAINERNAME}"] = line.strip().split()[0]
 			ps["{#CONTAINERNAME}"] = re.match(reg, line.strip().split()[0]).group()
 			ps["{#CONTAINERID}"] = line.strip().split()[1]
 			d["data"].append(ps)
@@ -174,6 +173,29 @@ def single_stat_update(args, container_dir, filename):
 
 	return stat
 
+
+# helper function to update single stats
+def single_stat_update_cache(args, container_dir, filename):
+	pipe = os.popen("docker exec " + args.container + " head -1 " + container_dir + "/" + filename  + " 2>&1")
+	for line in pipe:
+		stat = line
+	pipe.close()
+    # test that the docker command succeeded and pipe contained data
+	if not 'stat' in locals():
+		stat = ""
+	try:
+		f = open("/tmp/" + args.container + "/" + filename,"w")
+		f.write(stat)
+		f.close()
+	except Exception:
+		if not os.path.isdir("/tmp/" + args.container):
+			os.mkdir("/tmp/" + args.container)
+		with open("/tmp/" + args.container + "/" + filename, "w") as f:
+			f.write(stat)
+
+	return stat
+
+
 # helper function to gather stat type data (multiple rows of key value pairs)
 def multi_stat_check(args, filename):
 	dict = {}
@@ -219,6 +241,13 @@ def memory(args):
 	memory_usage_last = single_stat_update(args, container_dir, "memory.usage_in_bytes")
 	print (memory_usage_last.strip())
 
+def memory_cache(args):
+	container_dir = "/sys/fs/cgroup/memory"
+	memory_stat_last = {}
+	memory_stat_new = {}
+	memory_usage_last = single_stat_update_cache(args, container_dir, "memory.stat")
+	print (memory_usage_last.strip().split()[1])
+
 def debug(output):
 	if _DEBUG:
 		if not "debuglog" in globals():
@@ -234,7 +263,7 @@ if __name__ == "__main__":
 
 		parser = argparse.ArgumentParser(prog="discover.py", description="discover and get stats from docker containers")
 		parser.add_argument("container", help="container id")
-		parser.add_argument("stat", help="container stat", choices=["status", "uptime", "cpu","mem", "disk", "netin", "netout"])
+		parser.add_argument("stat", help="container stat", choices=["status", "uptime", "cpu","mem","mem_cache","disk", "netin", "netout"])
 		args = parser.parse_args()
 		pipe  = os.popen("docker ps | grep " + args.container + "| awk '{ print $1 }' 2>&1")
 		for line in pipe:
@@ -261,6 +290,9 @@ if __name__ == "__main__":
 		elif args.stat == "mem":
 			debug("calling memory for " + args.container)
 			memory(args)
+		elif args.stat == "mem_cache":
+			debug("calling memory for " + args.container)
+			memory_cache(args)
 		elif args.stat == "disk":
 			debug("calling disk for " + args.container)
 			disk(args)
