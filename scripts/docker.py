@@ -1,5 +1,4 @@
 #!/usr/bin/python3.6
-# originaly from 
 import os
 import json
 import argparse
@@ -17,11 +16,14 @@ _DEBUG = os.getenv("DEBUG", False)
 def discover():
 	d = {}
 	d["data"] = []
-	with os.popen("docker ps --format \"{{.Names}} {{.ID}}\"") as pipe:
+	with os.popen("docker ps -a --format \"{{.Names}} {{.ID}}\"") as pipe:
 		for line in pipe:
 			ps = {}
-			reg = r'^.+?\.[\w]+'
-			ps["{#CONTAINERNAME}"] = re.match(reg, line.strip().split()[0]).group()
+			reg = r'^.+?\.[\d]+'
+			if re.match(reg,  line.strip().split()[0]) is not None:
+				ps["{#CONTAINERNAME}"] = re.match(reg, line.strip().split()[0]).group()
+			else:
+				ps["{#CONTAINERNAME}"] = line.strip().split()[0]
 			ps["{#CONTAINERID}"] = line.strip().split()[1]
 			d["data"].append(ps)
 	print (json.dumps(d))
