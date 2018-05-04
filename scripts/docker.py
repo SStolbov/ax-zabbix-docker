@@ -58,7 +58,7 @@ def status(args):
 	
 # get the uptime in seconds, if the container is running
 def uptime(args):
-	with os.popen("docker inspect -f '{{json .State}}'  " + args.container + ") 2>&1") as pipe:
+	with os.popen("docker inspect -f '{{json .State}}'  " + args.container + " 2>&1") as pipe:
 		status = pipe.read().strip()
 	if "No such image or container" in status:
 		print ("0")
@@ -72,7 +72,7 @@ def uptime(args):
 			print ("0")
 
 def disk(args):
-	with os.popen("docker inspect -s -f {{.SizeRootFs}}  $(docker ps | grep " + args.container + "| awk '{ print $1 }') 2>&1") as pipe:
+	with os.popen("docker inspect -s -f {{.SizeRootFs}}  " + args.container + " 2>&1") as pipe:
 		stat = pipe.read().strip()
 	pipe.close()
 	# test that the docker command succeeded and pipe contained data
