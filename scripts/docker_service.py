@@ -70,7 +70,7 @@ def status(args):
 
 # status: 0 = no container found, 1 = running, 2 = closed, 3 = abnormal
 def service_status(args):
-	with os.popen("docker inspect $(docker service ps --format '{{.ID}}' --filter 'desired-state=Running' " + args.container + ") -f '{{.Status.State}}'  2>&1") as pipe:
+	with os.popen("docker inspect $(docker service ps --format '{{.ID}}' --filter 'desired-state=Running' " + args.container + ") -f '{{.Status.State}}' | head -1 2>&1") as pipe:
 		status = pipe.read().strip()
 
 	if "Error: No such object:" in status:
@@ -303,7 +303,7 @@ if __name__ == "__main__":
 		parser.add_argument("container", help="container id")
 		parser.add_argument("stat", help="container stat", choices=["status","service_status", "uptime", "cpu","mem","mem_cache","disk", "netin", "netout"])
 		args = parser.parse_args()
-		pipe  = os.popen("docker ps | grep " + args.container + "| awk '{ print $1 }' 2>&1")
+		pipe  = os.popen("docker service ls  | grep " + args.container + "| awk '{ print $1 }' 2>&1")
 		for line in pipe:
 		    args.container = line.rstrip("\n")
 		pipe.close()		
