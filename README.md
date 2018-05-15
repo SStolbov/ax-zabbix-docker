@@ -47,6 +47,8 @@ https://github.com/dimuskin/ax-zabbix-docker
 * cd /etc/zabbix
 * wget https://raw.githubusercontent.com/SStolbov/ax-zabbix-docker/master/scripts/docker.py
 * chmod 755 /etc/zabbix/docker.py
+* wget https://raw.githubusercontent.com/SStolbov/ax-zabbix-docker/master/scripts/docker_service.py
+* chmod 755 /etc/zabbix/docker_service.py
 * service  zabbix-agent restart
 * service  zabbix-agent status
 * usermod -a -G docker zabbix
